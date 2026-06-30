@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protein Metabolism - Interactive Examination Simulator</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #090d16, #111827);
+            --accent-gradient: linear-gradient(90deg, #3b82f6, #10b981);
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --border-subtle: #1f2937;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 20px 40px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            direction: ltr;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* شريط الدعاء الديناميكي المثبت في الأعلى */
+        .global-prayer-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #064e3b, #022c22);
+            color: #a7f3d0;
+            text-align: center;
+            padding: 12px 15px;
+            font-size: 15px;
+            font-weight: 700;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            border-bottom: 2px solid #10b981;
+            display: none;
+            direction: rtl;
+        }
+
+        /* شاشة البداية الزجاجية الفاخرة */
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-gradient);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .intro-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 45px 35px;
+            border-radius: 24px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-width: 650px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            animation: scaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .intro-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #60a5fa, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pulse-badge {
+            background: #ef4444;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse 1.8s infinite;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.04); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .intro-prayer-box {
+            font-size: 19px;
+            font-weight: 600;
+            color: #a7f3d0;
+            margin: 25px 0;
+            min-height: 60px;
+            direction: rtl;
+            line-height: 1.7;
+            border-right: 4px solid #10b981;
+            padding-right: 15px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .prayer-input-field {
+            width: 100%;
+            padding: 14px 20px;
+            background: rgba(17, 24, 39, 0.8);
+            border: 2px solid #374151;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.25s ease;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .prayer-input-field:focus {
+            border-color: #3b82f6;
+        }
+
+        .start-btn {
+            background: var(--accent-gradient);
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 16px 45px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 35px rgba(59, 130, 246, 0.5);
+        }
+
+        .wrapper {
+            margin-top: 85px;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .quiz-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1f2937;
+            padding: 16px 28px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-subtle);
+            font-weight: 600;
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #374151;
+            border-radius: 3px;
+            margin-bottom: 35px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transition: width 0.3s ease;
+        }
+
+        /* تنسيق غلاف القسم الديناميكي */
+        .section-cover-card {
+            text-align: center;
+            animation: slideCardIn 0.4s ease-out forwards;
+            padding: 20px 10px;
+        }
+
+        .section-badge {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #60a5fa;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .section-title-display {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .section-desc-display {
+            font-size: 16px;
+            color: var(--text-sub);
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-stats {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #1f2937;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #10b981;
+            border: 1px solid #374151;
+        }
+
+        .question-card {
+            display: none !important;
+        }
+
+        .question-card.active {
+            display: block !important;
+            animation: slideCardIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideCardIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .question-text {
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 25px;
+            line-height: 1.5;
+            letter-spacing: 0.3px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 25px;
+        }
+
+        .option-item {
+            background: #1f2937;
+            border: 2px solid #374151;
+            padding: 16px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            color: #cbd5e1;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .option-item:hover {
+            background: #2d3748;
+            border-color: #3b82f6;
+            color: #60a5fa;
+            transform: translateX(4px);
+        }
+
+        .option-item.correct {
+            background-color: #064e3b !important;
+            border-color: var(--success) !important;
+            color: #a7f3d0 !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .option-item.incorrect {
+            background-color: #7f1d1d !important;
+            border-color: var(--error) !important;
+            color: #fca5a5 !important;
+            animation: shake 0.3s ease-in-out;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .explanation-box {
+            background: linear-gradient(135deg, #064e3b, #022c22);
+            border-left: 5px solid var(--success);
+            padding: 22px;
+            border-radius: 8px;
+            margin-top: 25px;
+            display: none;
+            font-size: 15px;
+            color: #a7f3d0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .explanation-box h4 {
+            margin: 0 0 6px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: #34d399;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 35px;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+
+        .btn-wrong-retake {
+            background: linear-gradient(135deg, #dc2626, #e11d48);
+            color: white;
+            margin-top: 15px;
+        }
+
+        .btn-wrong-retake:hover {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .summary-panel {
+            text-align: center;
+            display: none;
+        }
+
+        .score-box {
+            font-size: 68px;
+            font-weight: 800;
+            color: #60a5fa;
+            margin: 20px 0;
+        }
+
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
+            z-index: 9999;
+            top: -40px;
+            animation: globalCascadeDown 2.4s linear forwards;
+        }
+
+        @keyframes globalCascadeDown {
+            0% { transform: translateY(0) scale(0.4) rotate(0deg); opacity: 0; }
+            15% { opacity: 0.85; transform: translateY(40px) scale(1) rotate(30deg); }
+            100% { transform: translateY(105vh) translateX(var(--x-move)) scale(1.2) rotate(var(--rot-move)); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="global-prayer-banner" id="globalPrayerBanner"></div>
+
+<div id="introScreen">
+    <div class="intro-card">
+        <div class="pulse-badge">Live Simulator Engine</div>
+        <div class="intro-title">Protein Metabolism</div>
+        
+        <div class="intro-prayer-box" id="introPrayerBox"></div>
+
+        <input type="text" class="prayer-input-field" id="userCustomPrayerInput" value="💚 لو الملف ده سهل عليكم أي حاجة، أتمنى تفتكروني بدعوة حلوة بظهر الغيب بالتوفيق وتيسير الحال.. ربنا يكلل تعبنا كلنا بالنجاح 💚">
+        
+        <button class="start-btn" onclick="launchExamEnvironment()">➔ Enter Examination</button>
+    </div>
+</div>
+
+<div class="wrapper" id="examWrapper" style="display: none;">
+    <div class="container">
+        <div class="quiz-metrics" id="quizMetricsHeader">
+            <span id="questionNum">Loading...</span>
+            <span id="scoreBadge">Score: 0</span>
+        </div>
+
+        <div class="progress-bar" id="examProgressBar">
+            <div class="progress-fill" id="progressBarFill"></div>
+        </div>
+
+        <div id="dynamicQuizContainer">
+            {{SECTION_CONTENT}}
+        </div>
+
+        <div class="nav-footer" id="examNavFooter">
+            <button class="btn btn-secondary" id="prevQuestionBtn" onclick="navigateTimeline(-1)" disabled>Previous</button>
+            <button class="btn btn-primary" id="nextQuestionBtn" onclick="navigateTimeline(1)">Next Question</button>
+        </div>
+
+        <div class="summary-panel" id="finalSummaryPanel">
+            <h2>🎉 Simulation Terminated!</h2>
+            <p id="summaryMessageText">Review your tactical score and parameters below.</p>
+            <div class="score-box" id="finalScoreDisplay">0 / 0</div>
+            <div style="display: flex; flex-direction: column; gap: 10px; max-width: 300px; margin: 0 auto;">
+                <button class="btn btn-primary" onclick="resetFullExamState()">Restart Full Exam</button>
+                <button class="btn btn-wrong-retake" id="retakeWrongBtn" style="display: none;" onclick="startWrongQuestionsOnlyMode()">➔ Retake Wrong Questions Only</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const defaultPrayerText = "💚 لو الملف ده سهل عليكم أي حاجة، أتمنى تفتكروني بدعوة حلوة بظهر الغيب بالتوفيق وتيسير الحال.. ربنا يكلل تعبنا كلنا بالنجاح 💚";
+let textCharIdx = 0;
+
+function playIntroTypewriter() {
+    if (textCharIdx < defaultPrayerText.length) {
+        document.getElementById("introPrayerBox").innerHTML += defaultPrayerText.charAt(textCharIdx);
+        textCharIdx++;
+        setTimeout(playIntroTypewriter, 45);
+    }
+}
+
+/* الـ Placeholder الرئيسي للـ Agent لحقن هيكل البيانات المكون من أقسام غير محدودة.
+  تنسيق البيانات المتوقع:
+  [
+    {
+      "section_title": "اسم القسم الأول",
+      "section_description": "وصف القسم أو معلومات إضافية عنه هنا",
+      "questions": [
+         {"q": "السؤال الأول؟", "options": ["أ", "ب", "ج", "د"], "correct": 0, "rationale": "التفسير والشرح هنا"},
+         ...
+      ]
+    },
+    ...
+  ]
+*/
+const masterExamSections = [
+  {
+    "section_title": "Department Questions (Protein Metabolism)",
+    "section_description": "أسئلة القسم على الشابتر 29 سؤال",
+    "questions": [
+      {
+        "q": "Role of HCI in protein digestion is:",
+        "options": [
+          "a- Unfolding of protein",
+          "b- Activation of pepsinogen",
+          "c- Activation of trypsinogen",
+          "d- All of the above",
+          "e- A and B"
+        ],
+        "correct": 4,
+        "rationale": "Gastric Hydrochloric Acid (HCl) causes unfolding (denaturation) of polypeptide chains and plays a direct role in activating pepsinogen into its active form, pepsin."
+      },
+      {
+        "q": "One of the following is a gastric enzyme:",
+        "options": [
+          "a- Trypsin",
+          "b- Aminopeptidase",
+          "c- Chymotrypsin",
+          "d- Elastase",
+          "e- Pepsin"
+        ],
+        "correct": 4,
+        "rationale": "Pepsin is the primary proteolytic enzyme secreted by the chief cells of the stomach."
+      },
+      {
+        "q": "Activation of pepsinogen occurs by:",
+        "options": [
+          "a- Intestinal enteropeptidase",
+          "b- Autocatalytic activation",
+          "c- HCI",
+          "d- B and C",
+          "e- A and B"
+        ],
+        "correct": 3,
+        "rationale": "Pepsinogen is initially activated by gastric HCl, and further activation occurs through an autocatalytic process where active pepsin activates additional pepsinogen molecules."
+      },
+      {
+        "q": "One of the following is not a pancreatic enzyme:",
+        "options": [
+          "a- Trypsin",
+          "b- Chymotrypsin",
+          "c- Carboxypeptidase",
+          "d- Aminopeptidase",
+          "e- None of the above"
+        ],
+        "correct": 3,
+        "rationale": "Aminopeptidases are intestinal enzymes secreted in the small intestine to complete digestion, whereas trypsin, chymotrypsin, and carboxypeptidase are synthesized in the pancreas."
+      },
+      {
+        "q": "All the following are zymogens except:",
+        "options": [
+          "a- Chymotrypsinogen",
+          "b- Pepsinogen",
+          "c- Trypsinogen",
+          "d- Dipeptidase"
+        ],
+        "correct": 3,
+        "rationale": "Dipeptidases are active intestinal enzymes that complete the digestion of dipeptides into free amino acids. They are not secreted in an inactive (zymogen) form like pepsinogen or trypsinogen."
+      },
+      {
+        "q": "Trypsinogen activates:",
+        "options": [
+          "a- Pepsinogen",
+          "b- Chymotrypsinogen",
+          "c- Aminopeptidase",
+          "d- None of the above"
+        ],
+        "correct": 3,
+        "rationale": "Trypsinogen is an inactive zymogen and cannot activate anything itself. It must first be converted into active Trypsin by enteropeptidase; it is the active Trypsin that subsequently activates chymotrypsinogen."
+      },
+      {
+        "q": "Intestinal enteropeptidase is:",
+        "options": [
+          "a- Intestinal enzyme digesting protein",
+          "b- Pancreatic enzyme digesting protein",
+          "c- Activates proelastase",
+          "d- None of the above"
+        ],
+        "correct": 3,
+        "rationale": "Intestinal enteropeptidase is a specific enzyme whose primary role is to activate pancreatic trypsinogen into active trypsin. It does not directly digest dietary protein or activate proelastase."
+      },
+      {
+        "q": "Absorption of amino acids is by:",
+        "options": [
+          "a- Passive diffusion & facilitated transport",
+          "b- Active transport",
+          "c- Passive diffusion",
+          "d- Facilitated transport"
+        ],
+        "correct": 1,
+        "rationale": "Free amino acids are rapidly absorbed from the small intestine into the bloodstream via active transport mechanisms."
+      },
+      {
+        "q": "Absorption of dipeptides:",
+        "options": [
+          "a- Normal in humans",
+          "b- Occurs in protein allergy",
+          "c- Occurs in celiac disease",
+          "d- B and C"
+        ],
+        "correct": 3,
+        "rationale": "Under abnormal conditions, a temporary defect in the intestinal epithelium combined with impaired digestion may allow intact proteins or large toxic peptides (like in celiac disease) to pass into circulation, forming the basis for allergies and malabsorption disorders."
+      },
+      {
+        "q": "Celiac disease is an allergy to:",
+        "options": [
+          "a- Gluten",
+          "b- Gliadin",
+          "c- Albumin",
+          "d- B and C"
+        ],
+        "correct": 0,
+        "rationale": "Celiac disease is a specific malabsorption disorder that occurs in response to the ingestion of gluten, a protein primarily found in wheat."
+      },
+      {
+        "q": "Amino acids toxic to intestine in celiac disease:",
+        "options": [
+          "a- Asparagine",
+          "b- Glutamate",
+          "c- Glutamine",
+          "d- Alanine"
+        ],
+        "correct": 2,
+        "rationale": "The partial digestion of gluten produces large peptides that are exceptionally rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."
+      },
+      {
+        "q": "A patient with celiac disease should avoid:",
+        "options": [
+          "a- Wheat",
+          "b- Milk",
+          "c- Oat",
+          "d- All of the above",
+          "e- A and C"
+        ],
+        "correct": 0,
+        "rationale": "Since celiac disease is an immune response to gluten, the patient must avoid wheat, as gluten is the primary protein found within it."
+      },
+      {
+        "q": "Formation NOT an anabolic fate of amino acids:",
+        "options": [
+          "a- Creatine",
+          "b- Milk",
+          "c- Glucose",
+          "d- Muscle protein",
+          "e- Purines"
+        ],
+        "correct": 2,
+        "rationale": "The conversion of the amino acid's carbon skeleton into glucose is categorized as a catabolic pathway, whereas building proteins, creatine, and purines are anabolic fates."
+      },
+      {
+        "q": "Main catabolic fate of amino acids is conversion to:",
+        "options": [
+          "a- Uric acid",
+          "b- Urea",
+          "c- Ketone bodies",
+          "d- Direct urinary excretion"
+        ],
+        "correct": 1,
+        "rationale": "The primary catabolic fate of amino acids involves deamination, producing toxic ammonia. The liver converts most of this toxic ammonia into non-toxic urea for safe excretion."
+      },
+      {
+        "q": "Removal of amino nitrogen and formation of ammonia is by:",
+        "options": [
+          "a- Transamination",
+          "b- Oxidative deamination",
+          "c- Transdeamination",
+          "d- None"
+        ],
+        "correct": 2,
+        "rationale": "The complete removal of ammonia from most amino acids involves a coupled process: transamination followed by oxidative deamination. These two steps functioning sequentially are collectively termed 'transdeamination'."
+      },
+      {
+        "q": "Release of free ammonia from glutamate to a-ketoglutarate is:",
+        "options": [
+          "a- Oxidative deamination",
+          "b- Transdeamination",
+          "c- Transamination",
+          "d- All"
+        ],
+        "correct": 0,
+        "rationale": "The specific reaction where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate, releasing free ammonia in the process, is called oxidative deamination."
+      },
+      {
+        "q": "Enzyme that does NOT catalyze transamination:",
+        "options": [
+          "a- ALT",
+          "b- L-glutamate dehydrogenase",
+          "c- AST",
+          "d- None"
+        ],
+        "correct": 1,
+        "rationale": "L-glutamate dehydrogenase is responsible for oxidative deamination. In contrast, ALT (Alanine aminotransferase) and AST (Aspartate aminotransferase) are transaminases that catalyze transamination reactions."
+      },
+      {
+        "q": "Liver cirrhosis shows elevation of all EXCEPT:",
+        "options": [
+          "a- ALT",
+          "b- AST",
+          "c- Urea",
+          "d- Ammonia"
+        ],
+        "correct": 2,
+        "rationale": "In liver cirrhosis (hepatic failure), the liver loses its ability to efficiently convert ammonia into urea. Consequently, blood ammonia levels rise (hyperammonemia) while plasma urea levels characteristically decrease."
+      },
+      {
+        "q": "Urea cycle occurs in:",
+        "options": [
+          "a- Liver cytosol",
+          "b- Liver & kidney cytosol",
+          "c- Liver mitochondria",
+          "d- Liver cytosol & mitochondria"
+        ],
+        "correct": 3,
+        "rationale": "The urea cycle is compartmentalized within the liver cells. The first two reactions occur in the mitochondrial matrix, and all subsequent steps take place in the cytosol."
+      },
+      {
+        "q": "Sources of the two nitrogens in urea:",
+        "options": [
+          "a- Ammonia & ornithine",
+          "b- Ammonia & citrulline",
+          "c- Ammonia & aspartate",
+          "d- None"
+        ],
+        "correct": 2,
+        "rationale": "The urea molecule requires two nitrogen atoms: the first is derived from free ammonia (incorporated via carbamoyl phosphate) , and the second is directly donated by the amino acid aspartate during the formation of argininosuccinate."
+      },
+      {
+        "q": "Mitochondrial steps of urea cycle end by:",
+        "options": [
+          "a- Arginine -> urea + ornithine",
+          "b- Aspartate + citrulline -> argininosuccinate",
+          "c- Ornithine + carbamoyl phosphate -> citrulline",
+          "d- Formation of carbamoyl phosphate"
+        ],
+        "correct": 2,
+        "rationale": "The mitochondrial phase of the urea cycle concludes with the enzyme ornithine transcarbamoylase catalyzing the formation of citrulline from ornithine and carbamoyl phosphate. Citrulline is then transported out into the cytosol."
+      },
+      {
+        "q": "Cytosolic enzyme(s):",
+        "options": [
+          "a- CPS1",
+          "b- Ornithine transcarbamylase",
+          "c- Argininosuccinate synthetase",
+          "d- Argininosuccinate lyase",
+          "e- C and D"
+        ],
+        "correct": 4,
+        "rationale": "Both Argininosuccinate synthetase and Argininosuccinate lyase are enzymes that function strictly within the cytosol during the later stages of the urea cycle."
+      },
+      {
+        "q": "Normal ammonia level:",
+        "options": [
+          "a- 0.5 mg/dL",
+          "b- <0.05 mg/dL",
+          "c- 50 mg/dL",
+          "d- 10-50 mg/dL"
+        ],
+        "correct": 1,
+        "rationale": "Under normal physiological conditions, the hepatic urea cycle efficiently clears ammonia, keeping the normal blood ammonia level safely below 0.05 mg/dL."
+      },
+      {
+        "q": "Urea is elevated in:",
+        "options": [
+          "a- Liver disease",
+          "b- Kidney disease",
+          "c- Muscle disease",
+          "d- A and B"
+        ],
+        "correct": 1,
+        "rationale": "Urea is synthesized in the liver but excreted by the kidneys. In cases of renal (kidney) failure, the body cannot excrete urea, leading to elevated plasma urea levels."
+      },
+      {
+        "q": "Acquired hyperammonemia due to:",
+        "options": [
+          "a- Hepatitis",
+          "b- Alcoholism",
+          "c- Biliary obstruction",
+          "d- All"
+        ],
+        "correct": 3,
+        "rationale": "Acquired hyperammonemia develops secondary to severe liver disease or cirrhosis, which can be caused by various conditions including alcoholism, viral hepatitis, and biliary obstruction."
+      },
+      {
+        "q": "High blood ammonia in liver cirrhosis due to:",
+        "options": [
+          "a- Portal-systemic shunting",
+          "b- Decreased conversion of ammonia to urea",
+          "c- A and B",
+          "d- None"
+        ],
+        "correct": 2,
+        "rationale": "In cirrhosis, hyperammonemia occurs due to a dual failure: collateral circulation (portal-systemic shunting) bypasses the liver , and the damaged liver tissue suffers a severely impaired ability to convert ammonia into urea."
+      },
+      {
+        "q": "Cause of convulsions in hepatic patients:",
+        "options": [
+          "a- ↑ GABA from ↑ glutamate",
+          "b- ↑ GABA from ↓ glutamine",
+          "c- ↓ GABA due to glutamate -> glutamine",
+          "d- ↓ GABA due to ↑ a-ketoglutarate"
+        ],
+        "correct": 2,
+        "rationale": "Ammonia toxicity causes convulsions linked to a deficiency in the inhibitory neurotransmitter GABA. Excess ammonia depletes a-ketoglutarate, shifting the equilibrium toward glutamate , which disrupts the normal conversion of glutamate into GABA."
+      },
+      {
+        "q": "Ornithine transcarbamylase deficiency causes:",
+        "options": [
+          "a- Type I hyperammonemia",
+          "b- Citrullinuria",
+          "c- Argininosuccinic acidemia",
+          "d- Argininemia",
+          "e- None"
+        ],
+        "correct": 4,
+        "rationale": "A deficiency in Ornithine transcarbamoylase specifically leads to Hyperammonemia type II. Since this specific condition is not listed among the choices, 'None' is the correct option."
+      },
+      {
+        "q": "Citrullinuria is due to deficiency of:",
+        "options": [
+          "a- CPS1",
+          "b- Argininosuccinase",
+          "c- Arginase",
+          "d- Ornithine transcarbamylase",
+          "e- None"
+        ],
+        "correct": 4,
+        "rationale": "Citrullinemia (or Citrullinuria) is caused by a genetic deficiency in the enzyme Argininosuccinate synthase. Because this specific enzyme is missing from the provided options, 'None' is correct."
+      }
+    ]
+  },
+  {
+    "section_title": "Previous Years' Questions (Protein Metabolism)",
+    "section_description": "أسئلة السنوات السابقة على هذا الشابتر 16 سؤال",
+    "questions": [
+      {
+        "q": "Which of the following amino acids are toxic to the intestine in celiac disease:",
+        "options": [
+          "a- Asparagine",
+          "b- Glutamate",
+          "c- Alanine",
+          "d- Glutamine"
+        ],
+        "correct": 3,
+        "rationale": "In celiac disease, gluten undergoes partial digestion to produce large peptides that are rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."
+      },
+      {
+        "q": "According ammonia:",
+        "options": [
+          "a- has Catabolic and anabolic fates",
+          "b- Synthesis of many essential amino acids",
+          "c- Only From deamination of amino acids",
+          "d- is converted into urea by kidney"
+        ],
+        "correct": 0,
+        "rationale": "Ammonia has anabolic pathways (such as the synthesis of non-essential amino acids and glutamine) as well as catabolic/excretory pathways (mainly conversion to non-toxic urea in the liver)."
+      },
+      {
+        "q": "About ALT and AST:",
+        "options": [
+          "a- are normal plasma enzymes",
+          "b- in ALT reaction glutamate act an nitrogen collector from alanine",
+          "c- their levels are increased by liver diseases only",
+          "d- plasma levels of AST and ALT are of therapeutic value in liver and muscle diseases"
+        ],
+        "correct": 1,
+        "rationale": "In the transamination reaction catalyzed by ALT, the amino group from alanine is transferred to a-ketoglutarate, which accepts it to form glutamate, effectively acting as the nitrogen collector."
+      },
+      {
+        "q": "Converting glutamate to alpha kg with release of free ammonia:",
+        "options": [
+          "a- transamintion",
+          "b- oxidative deamination",
+          "c- transdeamination",
+          "d- all of the above"
+        ],
+        "correct": 1,
+        "rationale": "The specific step where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate (alpha kg) while releasing free ammonia is called oxidative deamination."
+      },
+      {
+        "q": "Mitochondrial steps of urea cycle ends by:",
+        "options": [
+          "a- Splitting arginine into urea and ornithine",
+          "b- Transfer of aspartate to citrulline forming argininosuccinate",
+          "c- Transfer of ornithine to carbamoyl phosphate forming citrulline",
+          "d- Forming carbamoyl phosphate from CO2 and free ammonia"
+        ],
+        "correct": 2,
+        "rationale": "The first two reactions of the urea cycle occur in the mitochondria. This mitochondrial phase concludes when ornithine transcarbamoylase catalyzes the formation of citrulline from ornithine and carbamoyl phosphate, after which citrulline is transported to the cytosol."
+      },
+      {
+        "q": "Normal level of ammonia is:",
+        "options": [
+          "a- <.05 mg/dl",
+          "b- <.5 mg/dl",
+          "c- <5 mg/dl",
+          "d- <1 mg/dl"
+        ],
+        "correct": 0,
+        "rationale": "The liver's capacity to run the urea cycle normally exceeds the rate of ammonia generation, effectively keeping the normal blood ammonia level safely below 0.05 mg/dL."
+      },
+      {
+        "q": "Main fate of amino acids catabolism:",
+        "options": [
+          "a- Urea",
+          "b- uric acid",
+          "c- glucose",
+          "d- direct excretion in urine"
+        ],
+        "correct": 0,
+        "rationale": "The primary disposal and catabolic fate of the toxic ammonia generated from amino acid deamination is its conversion into non-toxic urea by the liver."
+      },
+      {
+        "q": "Congenital deficiency of ornithine transcarbamoylase causes:",
+        "options": [
+          "a- Hyperammonaemia type I",
+          "b- Hyperammonaemia type II",
+          "c- Hyperornithinaemia",
+          "d- Citrullinaemia"
+        ],
+        "correct": 1,
+        "rationale": "A specific genetic deficiency in the urea cycle enzyme ornithine transcarbamoylase leads to Hyperammonemia type II (an X-linked disorder)."
+      },
+      {
+        "q": "The following enzyme of urea cycle is present in cytosol:",
+        "options": [
+          "a- Argininosuccinic acid synthetase",
+          "b- Argininosuccinase",
+          "c- Arginase",
+          "d- All of these"
+        ],
+        "correct": 3,
+        "rationale": "Once citrulline enters the cytosol, all subsequent reactions of the urea cycle take place there. This involves the enzymes argininosuccinate synthetase, argininosuccinate lyase (argininosuccinase), and arginase."
+      },
+      {
+        "q": "Activation or inactivation of certain key regulatory enzymes is accomplished by covalent modification of the amino acid:",
+        "options": [
+          "a- Glycine",
+          "b- Phenylalanine",
+          "c- Lysine",
+          "d- Serine"
+        ],
+        "correct": 3,
+        "rationale": "Covalent modifications, such as phosphorylation, typically occur on amino acids that contain a hydroxyl group in their side chain. Serine is the primary amino acid targeted for these regulatory modifications."
+      },
+      {
+        "q": "All of the following may cause hyperammonemia EXCEPT:",
+        "options": [
+          "a- OTC deficiency",
+          "b- CPS I deficiency",
+          "c- Uric aciduria",
+          "d- Argininosuccinate lyase deficiency"
+        ],
+        "correct": 2,
+        "rationale": "Hereditary hyperammonemia is caused by a deficiency in any of the five enzymes of the urea cycle (such as OTC, CPS I, or Argininosuccinate lyase). Uric aciduria is unrelated to this pathway."
+      },
+      {
+        "q": "Which of the following amino acids can directly donate nitrogen for urea synthesis?",
+        "options": [
+          "a- Phenylalanine",
+          "b- Aspartate",
+          "c- Valine",
+          "d- Serine"
+        ],
+        "correct": 1,
+        "rationale": "The urea molecule requires two nitrogen atoms. One comes from free ammonia, and the second is directly donated by the amino acid aspartate during the cytosolic formation of argininosuccinate."
+      },
+      {
+        "q": "Which enzyme is deficient in type I hyperammonemia?",
+        "options": [
+          "a- Carbamoyl phosphate synthetase I",
+          "b- Ornithine transcarbamylase",
+          "c- Argininosuccinate lyase",
+          "d- Glutamate dehydrogenase"
+        ],
+        "correct": 0,
+        "rationale": "Hyperammonemia type I is specifically caused by a deficiency in the enzyme Carbamoyl phosphate synthetase I (CPS I)."
+      },
+      {
+        "q": "Ammonia is primarily detoxified in the:",
+        "options": [
+          "a- Brain",
+          "b- Liver",
+          "c- Kidney",
+          "d- Muscle"
+        ],
+        "correct": 1,
+        "rationale": "The liver serves as the main detoxification center of the body for amino acid deamination, converting the majority of toxic ammonia into urea."
+      },
+      {
+        "q": "Which of the following urea cycle enzymes functions in the cytosol?",
+        "options": [
+          "a- Carbamoyl phosphate synthetase I",
+          "b- Ornithine transcarbamylase",
+          "c- Argininosuccinate synthetase",
+          "d- N-acetylglutamate synthase"
+        ],
+        "correct": 2,
+        "rationale": "Carbamoyl phosphate synthetase I and Ornithine transcarbamoylase function exclusively in the mitochondrial matrix. Argininosuccinate synthetase operates in the cytosol."
+      },
+      {
+        "q": "Which of the following amino acids helps in the detoxification of ammonia in muscle tissue?",
+        "options": [
+          "a- Glycine",
+          "b- Glutamate",
+          "c- Glutamine",
+          "d- Alanine"
+        ],
+        "correct": 2,
+        "rationale": "In extrarenal tissues, ammonia can be detoxified by converting it into glutamine. This is especially important for safely transporting ammonia through the bloodstream without toxicity. (Note: While muscle also heavily utilizes alanine via the glucose-alanine cycle, glutamine formation is a key generalized mechanism for extrahepatic ammonia detoxification)."
+      }
+    ]
+  },
+  {
+    "section_title": "Additional Questions Generated by AI",
+    "section_description": "أسئلة الذكاء الاصطناعي 20 سؤال",
+    "questions": [
+      {
+        "q": "Which enzyme activates trypsinogen into trypsin in the small intestine?",
+        "options": [
+          "a- Pepsin",
+          "b- Enteropeptidase",
+          "c- Chymotrypsin",
+          "d- Aminopeptidase"
+        ],
+        "correct": 1,
+        "rationale": "Enteropeptidase is the specific intestinal enzyme that initiates the activation of the pancreatic zymogen trypsinogen."
+      },
+      {
+        "q": "What is the primary role of gastric HCl in protein digestion?",
+        "options": [
+          "a- Hydrolysis of peptide bonds",
+          "b- Activation of chymotrypsin",
+          "c- Denaturation/unfolding of protein",
+          "d- Absorption of amino acids"
+        ],
+        "correct": 2,
+        "rationale": "Gastric HCl denatures proteins, making them accessible to proteolytic enzymes like pepsin."
+      },
+      {
+        "q": "Which amino acid acts as the nitrogen acceptor in transamination?",
+        "options": [
+          "a- Alanine",
+          "b- Glutamate",
+          "c- a-Ketoglutarate",
+          "d- Aspartate"
+        ],
+        "correct": 2,
+        "rationale": "a-Ketoglutarate is the universal a-keto acid that accepts amino groups during transamination to become glutamate."
+      },
+      {
+        "q": "Where does the urea cycle primarily occur?",
+        "options": [
+          "a- Kidney only",
+          "b- Muscle only",
+          "c- Liver (mitochondria and cytosol)",
+          "d- Intestine"
+        ],
+        "correct": 2,
+        "rationale": "Urea formation is confined to the liver because it is the only organ that expresses the enzyme arginase."
+      },
+      {
+        "q": "Which urea cycle enzyme requires N-acetylglutamate as an activator?",
+        "options": [
+          "a- Arginase",
+          "b- Carbamoyl phosphate synthetase I",
+          "c- Argininosuccinate lyase",
+          "d- Ornithine transcarbamylase"
+        ],
+        "correct": 1,
+        "rationale": "CPS I is the rate-limiting enzyme of the urea cycle and is absolutely dependent on N-acetylglutamate."
+      },
+      {
+        "q": "Which molecule donates the second nitrogen in the urea cycle?",
+        "options": [
+          "a- Ammonia",
+          "b- Glutamine",
+          "c- Aspartate",
+          "d- Alanine"
+        ],
+        "correct": 2,
+        "rationale": "The second nitrogen of the urea molecule is directly donated by aspartate."
+      },
+      {
+        "q": "Hyperammonemia type I is caused by a deficiency of:",
+        "options": [
+          "a- Arginase",
+          "b- Ornithine transcarbamylase",
+          "c- Carbamoyl phosphate synthetase I",
+          "d- Argininosuccinate synthetase"
+        ],
+        "correct": 2,
+        "rationale": "CPS I deficiency is the cause of Hyperammonemia Type I."
+      },
+      {
+        "q": "Which amino acid is the primary transport form of ammonia from muscle?",
+        "options": [
+          "a- Glutamine",
+          "b- Alanine",
+          "c- Glutamate",
+          "d- Arginine"
+        ],
+        "correct": 1,
+        "rationale": "The glucose-alanine cycle is the primary mechanism for transporting nitrogen from muscle to the liver."
+      },
+      {
+        "q": "What is the main end-product of amino acid catabolism in humans?",
+        "options": [
+          "a- Ammonia",
+          "b- Uric acid",
+          "c- Urea",
+          "d- Creatinine"
+        ],
+        "correct": 2,
+        "rationale": "The liver converts toxic ammonia into non-toxic urea for safe excretion."
+      },
+      {
+        "q": "Which enzyme deficiency causes Hyperammonemia Type II?",
+        "options": [
+          "a- Ornithine transcarbamylase",
+          "b- Carbamoyl phosphate synthetase I",
+          "c- Argininosuccinate lyase",
+          "d- Arginase"
+        ],
+        "correct": 0,
+        "rationale": "This X-linked disorder is specifically caused by a deficiency in Ornithine transcarbamylase."
+      },
+      {
+        "q": "Why is ammonia toxic to the brain?",
+        "options": [
+          "a- It depletes a-Ketoglutarate",
+          "b- It inhibits glycolysis",
+          "c- It increases ATP synthesis",
+          "d- It promotes GABA synthesis"
+        ],
+        "correct": 0,
+        "rationale": "Ammonia forces the glutamate dehydrogenase reaction to form glutamate, depleting the TCA cycle intermediate a-Ketoglutarate."
+      },
+      {
+        "q": "Kwashiorkor is primarily caused by:",
+        "options": [
+          "a- Calorie deficiency",
+          "b- Protein deficiency",
+          "c- Fat deficiency",
+          "d- Vitamin deficiency"
+        ],
+        "correct": 1,
+        "rationale": "Kwashiorkor is defined by protein deficiency despite adequate caloric intake."
+      },
+      {
+        "q": "Which enzyme cleaves arginine to produce urea?",
+        "options": [
+          "a- Arginase",
+          "b- Argininosuccinate synthetase",
+          "c- Argininosuccinate lyase",
+          "d- Urease"
+        ],
+        "correct": 0,
+        "rationale": "Arginase is the liver enzyme that splits arginine into urea and ornithine."
+      },
+      {
+        "q": "What is the cause of edema in Kwashiorkor?",
+        "options": [
+          "a- Excess sodium retention",
+          "b- Decreased plasma albumin",
+          "c- Increased heart failure",
+          "d- Increased histamine release"
+        ],
+        "correct": 1,
+        "rationale": "The lack of protein leads to low albumin, reducing plasma oncotic pressure and causing fluid leakage into tissues (edema)."
+      },
+      {
+        "q": "Which transport molecule is used to move ammonia from brain to liver?",
+        "options": [
+          "a- Alanine",
+          "b- Glutamine",
+          "c- Arginine",
+          "d- Aspartate"
+        ],
+        "correct": 1,
+        "rationale": "Glutamine is the primary safe transport form for ammonia in extrarenal tissues, especially the brain."
+      },
+      {
+        "q": "Which of these is an essential component of collagen?",
+        "options": [
+          "a- Alanine",
+          "b- Glycine",
+          "c- Valine",
+          "d- Leucine"
+        ],
+        "correct": 1,
+        "rationale": "Glycine is an essential component of collagen, appearing in every third position of the triple helix."
+      },
+      {
+        "q": "What is the caloric value of 1 gram of protein?",
+        "options": [
+          "a- 4 kcal",
+          "b- 7 kcal",
+          "c- 9 kcal",
+          "d- 2 kcal"
+        ],
+        "correct": 0,
+        "rationale": "Proteins provide 4 kcal/gram of energy."
+      },
+      {
+        "q": "Which zymogen activates chymotrypsinogen?",
+        "options": [
+          "a- Pepsin",
+          "b- Trypsin",
+          "c- Aminopeptidase",
+          "d- Enteropeptidase"
+        ],
+        "correct": 1,
+        "rationale": "Active trypsin is the master enzyme that activates the other pancreatic proteolytic enzymes, including chymotrypsinogen."
+      },
+      {
+        "q": "What is the normal blood ammonia level?",
+        "options": [
+          "a- < 0.05 mg/dL",
+          "b- < 5 mg/dL",
+          "c- < 10 mg/dL",
+          "d- < 50 mg/dL"
+        ],
+        "correct": 0,
+        "rationale": "Normal physiological levels of blood ammonia are very low, maintained under 0.05 mg/dL by the urea cycle."
+      },
+      {
+        "q": "Which amino acid donates nitrogen for purine synthesis?",
+        "options": [
+          "a- Glutamine",
+          "b- Alanine",
+          "c- Valine",
+          "d- Leucine"
+        ],
+        "correct": 0,
+        "rationale": "The amide group of glutamine is a key nitrogen source for the synthesis of purines, pyrimidines, and amino sugars."
+      }
+    ]
+  }
+];
+
+const localStorageKey = "exam_sections_state_" + btoa("Protein Metabolism");
+
+// تجميع الخط الزمني بالكامل (يحتوي على الـ Covers والأسئلة بترتيبها)
+let timelineItems = []; 
+let currentTimelineIdx = 0;
+let sessionScore = 0;
+let totalQuestionsCount = 0;
+
+// مصفوفة مستقلة لمتابعة إجابات المستخدم والأسئلة الخاطئة
+let trackingSelectionsMap = {}; // مفتاحها يعتمد على معرف فريد للسؤال
+let wrongQuestionsGlobalList = [];
+let isWrongRetakeMode = false;
+
+// بناء الخط الزمني الديناميكي للامتحان
+function buildExamTimeline(sectionsData) {
+    timelineItems = [];
+    totalQuestionsCount = 0;
+    
+    sectionsData.forEach((section, sIdx) => {
+        // 1. إضافة الصفحة الافتتاحية للقسم كـ Item مستقل في الخط الزمني
+        timelineItems.push({
+            type: 'cover',
+            sectionIdx: sIdx,
+            title: section.section_title,
+            description: section.section_description || '',
+            questionCount: section.questions.length
+        });
+        
+        // 2. إضافة أسئلة هذا القسم تتابعاً
+        section.questions.forEach((qItem, qIdx) => {
+            totalQuestionsCount++;
+            timelineItems.push({
+                type: 'question',
+                sectionIdx: sIdx,
+                questionIdx: qIdx,
+                globalQNum: totalQuestionsCount,
+                sectionTitle: section.section_title,
+                qData: qItem
+            });
+        });
+    });
+}
+
+function loadExamStateFromStorage() {
+    let savedState = localStorage.getItem(localStorageKey);
+    buildExamTimeline(masterExamSections);
+    
+    if (savedState) {
+        try {
+            let parsed = JSON.parse(savedState);
+            currentTimelineIdx = parsed.currentTimelineIdx || 0;
+            sessionScore = parsed.sessionScore || 0;
+            trackingSelectionsMap = parsed.trackingSelectionsMap || {};
+            wrongQuestionsGlobalList = parsed.wrongQuestionsGlobalList || [];
+            
+            if (parsed.customBannerText) {
+                document.getElementById("globalPrayerBanner").innerText = parsed.customBannerText;
+            }
+            
+            if (parsed.isFinished) {
+                displayFinalSummaryReport();
+                return;
+            }
+        } catch (e) {
+            console.error("Error restoration simulation parameters", e);
+        }
+    }
+    renderActiveTimelineItem();
+}
+
+function saveExamStateToStorage(isFinished = false) {
+    if (isWrongRetakeMode) return; // لا نقوم بحفظ الحالة أثناء طور مراجعة الأخطاء
+    let stateObj = {
+        currentTimelineIdx: currentTimelineIdx,
+        sessionScore: sessionScore,
+        trackingSelectionsMap: trackingSelectionsMap,
+        wrongQuestionsGlobalList: wrongQuestionsGlobalList,
+        customBannerText: document.getElementById("globalPrayerBanner").innerText,
+        isFinished: isFinished
+    };
+    localStorage.setItem(localStorageKey, JSON.stringify(stateObj));
+}
+
+function launchExamEnvironment() {
+    let inputPrayer = document.getElementById("userCustomPrayerInput").value.trim();
+    let finalBannerText = inputPrayer !== "" ? "💡 " + inputPrayer + " 💡" : "💡 " + defaultPrayerText + " 💡";
+    
+    document.getElementById("globalPrayerBanner").innerText = finalBannerText;
+    document.getElementById("introScreen").style.display = "none";
+    document.getElementById("globalPrayerBanner").style.display = "block";
+    document.getElementById("examWrapper").style.display = "block";
+    
+    loadExamStateFromStorage();
+}
+
+function renderActiveTimelineItem() {
+    const container = document.getElementById('dynamicQuizContainer');
+    container.innerHTML = '';
+    
+    const currentItem = timelineItems[currentTimelineIdx];
+    
+    if (currentItem.type === 'cover') {
+        // إنشاء وتوليد هيكل الـ Section Cover Page ديناميكيًا
+        const coverDiv = document.createElement('div');
+        coverDiv.className = 'section-cover-card';
+        coverDiv.innerHTML = `
+            <div class="section-badge">Section ${currentItem.sectionIdx + 1}</div>
+            <div class="section-title-display">${currentItem.title}</div>
+            <div class="section-desc-display">${currentItem.description}</div>
+            <div class="section-stats">
+                <span>📋 Total Questions: ${currentItem.questionCount}</span>
+            </div>
+        `;
+        container.appendChild(coverDiv);
+        
+        // تحديث شريط المقاييس أثناء الغلاف
+        document.getElementById('questionNum').innerText = `Introduction to Section`;
+        document.getElementById('nextQuestionBtn').innerText = 'Start Section ➔';
+        
+    } else if (currentItem.type === 'question') {
+        // توليد هيكل كارت السؤال والمحتوى بالكامل
+        const qData = currentItem.qData;
+        const uniqueQKey = `s${currentItem.sectionIdx}_q${currentItem.questionIdx}_${qData.q.substring(0,15)}`;
+        
+        const card = document.createElement('div');
+        card.className = 'question-card active';
+        
+        const sectionIndicator = document.createElement('div');
+        sectionIndicator.style.cssText = "font-size:12px; color:var(--text-sub); margin-bottom:5px; font-weight:700; text-transform:uppercase;";
+        sectionIndicator.innerText = currentItem.sectionTitle;
+        card.appendChild(sectionIndicator);
+        
+        const qText = document.createElement('div');
+        qText.className = 'question-text';
+        qText.innerText = qData.q;
+        card.appendChild(qText);
+        
+        const optionsDiv = document.createElement('div');
+        optionsDiv.className = 'options-list';
+        
+        const userSavedSelection = trackingSelectionsMap[uniqueQKey];
+        
+        qData.options.forEach((optionText, optionIndex) => {
+            const optionButton = document.createElement('button');
+            optionButton.className = 'option-item';
+            optionButton.innerText = optionText;
+            optionButton.onclick = (e) => processSelectedAnswer(uniqueQKey, optionIndex, e);
+            
+            if (userSavedSelection !== undefined && userSavedSelection !== null) {
+                if (optionIndex === qData.correct) {
+                    optionButton.classList.add('correct');
+                } else if (optionIndex === userSavedSelection) {
+                    optionButton.classList.add('incorrect');
+                }
+            }
+            optionsDiv.appendChild(optionButton);
+        });
+        card.appendChild(optionsDiv);
+        
+        const explanationBoxElement = document.createElement('div');
+        explanationBoxElement.className = 'explanation-box';
+        explanationBoxElement.id = `explanation_box_live`;
+        explanationBoxElement.innerHTML = `<h4>💡 Rationale:</h4>${qData.rationale}`;
+        
+        if (userSavedSelection !== undefined && userSavedSelection !== null) {
+            explanationBoxElement.style.display = 'block';
+        }
+        card.appendChild(explanationBoxElement);
+        container.appendChild(card);
+        
+        // تحديث شريط المقاييس أثناء السؤال
+        document.getElementById('questionNum').innerText = `Question ${currentItem.globalQNum} of ${totalQuestionsCount}`;
+        
+        if (currentTimelineIdx === timelineItems.length - 1) {
+            document.getElementById('nextQuestionBtn').innerText = 'Submit Assessment';
+        } else {
+            document.getElementById('nextQuestionBtn').innerText = 'Next Question';
+        }
+    }
+    
+    document.getElementById('scoreBadge').innerText = `Score: ${sessionScore}`;
+    document.getElementById('prevQuestionBtn').disabled = currentTimelineIdx === 0;
+    
+    // تحديث شريط التقدم الأفقي العام بناءً على طول الخط الزمني بالكامل
+    const horizontalProgressPercent = (currentTimelineIdx / (timelineItems.length - 1)) * 100;
+    document.getElementById('progressBarFill').style.width = `${horizontalProgressPercent}%`;
+}
+
+function processSelectedAnswer(uniqueQKey, chosenIndex, event) {
+    if (trackingSelectionsMap[uniqueQKey] !== undefined) return;
+    
+    trackingSelectionsMap[uniqueQKey] = chosenIndex;
+    const currentItem = timelineItems[currentTimelineIdx];
+    const qData = currentItem.qData;
+    
+    const optionButtons = document.querySelectorAll('.option-item');
+    const feedbackBox = document.getElementById('explanation_box_live');
+    
+    if (chosenIndex === qData.correct) {
+        optionButtons[chosenIndex].classList.add('correct');
+        sessionScore++;
+        triggerTopToBottomCascade();
+    } else {
+        optionButtons[chosenIndex].classList.add('incorrect');
+        optionButtons[qData.correct].classList.add('correct');
+        
+        // التحقق من عدم تكرار السؤال في مصفوفة الأخطاء
+        if (!wrongQuestionsGlobalList.some(item => item.q === qData.q)) {
+            wrongQuestionsGlobalList.push(qData);
+        }
+    }
+    
+    document.getElementById('scoreBadge').innerText = `Score: ${sessionScore}`;
+    if(feedbackBox) feedbackBox.style.display = 'block';
+    saveExamStateToStorage(false);
+}
+
+function navigateTimeline(direction) {
+    currentTimelineIdx += direction;
+    saveExamStateToStorage(false);
+    
+    if (currentTimelineIdx >= timelineItems.length) {
+        displayFinalSummaryReport();
+    } else {
+        renderActiveTimelineItem();
+    }
+}
+
+function triggerTopToBottomCascade() {
+    const cascadeGems = ['✨', '⭐', '❤️', '💖', '🌟', '💕', '💫'];
+    for (let i = 0; i < 22; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'heart-particle';
+        particle.innerText = cascadeGems[Math.floor(Math.random() * cascadeGems.length)];
+        
+        const randomLeft = Math.random() * 100;
+        particle.style.left = `${randomLeft}%`;
+        
+        const moveX = (Math.random() - 0.5) * 140;
+        const moveRot = (Math.random() - 0.5) * 540;
+        
+        particle.style.setProperty('--x-move', `${moveX}px`);
+        particle.style.setProperty('--rot-move', `${moveRot}deg`);
+        
+        particle.style.fontSize = `${Math.floor(Math.random() * 10) + 18}px`;
+        const randomDelay = Math.random() * 0.5;
+        particle.style.animationDelay = `${randomDelay}s`;
+        
+        document.body.appendChild(particle);
+        setTimeout(() => { particle.remove(); }, 2400);
+    }
+}
+
+function displayFinalSummaryReport() {
+    saveExamStateToStorage(true);
+    document.getElementById('dynamicQuizContainer').style.display = 'none';
+    document.getElementById('quizMetricsHeader').style.display = 'none';
+    document.getElementById('examProgressBar').style.display = 'none';
+    document.getElementById('examNavFooter').style.display = 'none';
+    
+    document.getElementById('finalSummaryPanel').style.display = 'block';
+    
+    // حساب المجموع الكلي الحقيقي لعدد الأسئلة لاستخدامه في لوحة النهاية
+    document.getElementById('finalScoreDisplay').innerText = `${sessionScore} / ${totalQuestionsCount}`;
+    
+    const retakeWrongBtn = document.getElementById('retakeWrongBtn');
+    if (wrongQuestionsGlobalList.length > 0) {
+        retakeWrongBtn.style.display = 'inline-block';
+        document.getElementById('summaryMessageText').innerText = `لديك ${wrongQuestionsGlobalList.length} أخطاء طفيفة، اضغط بالأسفل لاستهدافها وحلها بشكل مباشر!`;
+    } else {
+        retakeWrongBtn.style.display = 'none';
+        document.getElementById('summaryMessageText').innerText = "مذهل! لقد قمت بحل كافة أسئلة الأقسام بنجاح وتفوق ساحق 100%!";
+    }
+}
+
+function resetFullExamState() {
+    localStorage.removeItem(localStorageKey);
+    window.location.reload();
+}
+
+function startWrongQuestionsOnlyMode() {
+    isWrongRetakeMode = true;
+    
+    // بناء خط زمني وهمي يحتوي فقط على الأسئلة الخاطئة دون غلاف
+    timelineItems = wrongQuestionsGlobalList.map((qItem, index) => {
+        return {
+            type: 'question',
+            sectionIdx: 999, // كود وهمي لطور الأخطاء
+            questionIdx: index,
+            globalQNum: index + 1,
+            sectionTitle: "🎯 Targeted Review Mode",
+            qData: qItem
+        };
+    });
+    
+    totalQuestionsCount = timelineItems.length;
+    currentTimelineIdx = 0;
+    sessionScore = 0;
+    trackingSelectionsMap = {}; 
+    
+    document.getElementById('finalSummaryPanel').style.display = 'none';
+    document.getElementById('dynamicQuizContainer').style.display = 'block';
+    document.getElementById('quizMetricsHeader').style.display = 'flex';
+    document.getElementById('examProgressBar').style.display = 'block';
+    document.getElementById('examNavFooter').style.display = 'flex';
+    
+    renderActiveTimelineItem();
+}
+
+window.onload = function() {
+    let savedState = localStorage.getItem(localStorageKey);
+    if (savedState) {
+        launchExamEnvironment();
+    } else {
+        playIntroTypewriter();
+    }
+};
+</script>
+
+</body>
+</html>
+<script id="exam-metadata" type="application/json">{"filename":"protein_metabolism.html","title":"Protein Metabolism","prayer":"💚 لو الملف ده سهل عليكم أي حاجة، أتمنى تفتكروني بدعوة حلوة بظهر الغيب بالتوفيق وتيسير الحال.. ربنا يكلل تعبنا كلنا بالنجاح 💚","templateName":"new - template((sections)).html","questions":[{"q":"Role of HCI in protein digestion is:","options":["a- Unfolding of protein","b- Activation of pepsinogen","c- Activation of trypsinogen","d- All of the above","e- A and B"],"correct":4,"rationale":"Gastric Hydrochloric Acid (HCl) causes unfolding (denaturation) of polypeptide chains and plays a direct role in activating pepsinogen into its active form, pepsin."},{"q":"One of the following is a gastric enzyme:","options":["a- Trypsin","b- Aminopeptidase","c- Chymotrypsin","d- Elastase","e- Pepsin"],"correct":4,"rationale":"Pepsin is the primary proteolytic enzyme secreted by the chief cells of the stomach."},{"q":"Activation of pepsinogen occurs by:","options":["a- Intestinal enteropeptidase","b- Autocatalytic activation","c- HCI","d- B and C","e- A and B"],"correct":3,"rationale":"Pepsinogen is initially activated by gastric HCl, and further activation occurs through an autocatalytic process where active pepsin activates additional pepsinogen molecules."},{"q":"One of the following is not a pancreatic enzyme:","options":["a- Trypsin","b- Chymotrypsin","c- Carboxypeptidase","d- Aminopeptidase","e- None of the above"],"correct":3,"rationale":"Aminopeptidases are intestinal enzymes secreted in the small intestine to complete digestion, whereas trypsin, chymotrypsin, and carboxypeptidase are synthesized in the pancreas."},{"q":"All the following are zymogens except:","options":["a- Chymotrypsinogen","b- Pepsinogen","c- Trypsinogen","d- Dipeptidase"],"correct":3,"rationale":"Dipeptidases are active intestinal enzymes that complete the digestion of dipeptides into free amino acids. They are not secreted in an inactive (zymogen) form like pepsinogen or trypsinogen."},{"q":"Trypsinogen activates:","options":["a- Pepsinogen","b- Chymotrypsinogen","c- Aminopeptidase","d- None of the above"],"correct":3,"rationale":"Trypsinogen is an inactive zymogen and cannot activate anything itself. It must first be converted into active Trypsin by enteropeptidase; it is the active Trypsin that subsequently activates chymotrypsinogen."},{"q":"Intestinal enteropeptidase is:","options":["a- Intestinal enzyme digesting protein","b- Pancreatic enzyme digesting protein","c- Activates proelastase","d- None of the above"],"correct":3,"rationale":"Intestinal enteropeptidase is a specific enzyme whose primary role is to activate pancreatic trypsinogen into active trypsin. It does not directly digest dietary protein or activate proelastase."},{"q":"Absorption of amino acids is by:","options":["a- Passive diffusion & facilitated transport","b- Active transport","c- Passive diffusion","d- Facilitated transport"],"correct":1,"rationale":"Free amino acids are rapidly absorbed from the small intestine into the bloodstream via active transport mechanisms."},{"q":"Absorption of dipeptides:","options":["a- Normal in humans","b- Occurs in protein allergy","c- Occurs in celiac disease","d- B and C"],"correct":3,"rationale":"Under abnormal conditions, a temporary defect in the intestinal epithelium combined with impaired digestion may allow intact proteins or large toxic peptides (like in celiac disease) to pass into circulation, forming the basis for allergies and malabsorption disorders."},{"q":"Celiac disease is an allergy to:","options":["a- Gluten","b- Gliadin","c- Albumin","d- B and C"],"correct":0,"rationale":"Celiac disease is a specific malabsorption disorder that occurs in response to the ingestion of gluten, a protein primarily found in wheat."},{"q":"Amino acids toxic to intestine in celiac disease:","options":["a- Asparagine","b- Glutamate","c- Glutamine","d- Alanine"],"correct":2,"rationale":"The partial digestion of gluten produces large peptides that are exceptionally rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."},{"q":"A patient with celiac disease should avoid:","options":["a- Wheat","b- Milk","c- Oat","d- All of the above","e- A and C"],"correct":0,"rationale":"Since celiac disease is an immune response to gluten, the patient must avoid wheat, as gluten is the primary protein found within it."},{"q":"Formation NOT an anabolic fate of amino acids:","options":["a- Creatine","b- Milk","c- Glucose","d- Muscle protein","e- Purines"],"correct":2,"rationale":"The conversion of the amino acid's carbon skeleton into glucose is categorized as a catabolic pathway, whereas building proteins, creatine, and purines are anabolic fates."},{"q":"Main catabolic fate of amino acids is conversion to:","options":["a- Uric acid","b- Urea","c- Ketone bodies","d- Direct urinary excretion"],"correct":1,"rationale":"The primary catabolic fate of amino acids involves deamination, producing toxic ammonia. The liver converts most of this toxic ammonia into non-toxic urea for safe excretion."},{"q":"Removal of amino nitrogen and formation of ammonia is by:","options":["a- Transamination","b- Oxidative deamination","c- Transdeamination","d- None"],"correct":2,"rationale":"The complete removal of ammonia from most amino acids involves a coupled process: transamination followed by oxidative deamination. These two steps functioning sequentially are collectively termed 'transdeamination'."},{"q":"Release of free ammonia from glutamate to a-ketoglutarate is:","options":["a- Oxidative deamination","b- Transdeamination","c- Transamination","d- All"],"correct":0,"rationale":"The specific reaction where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate, releasing free ammonia in the process, is called oxidative deamination."},{"q":"Enzyme that does NOT catalyze transamination:","options":["a- ALT","b- L-glutamate dehydrogenase","c- AST","d- None"],"correct":1,"rationale":"L-glutamate dehydrogenase is responsible for oxidative deamination. In contrast, ALT (Alanine aminotransferase) and AST (Aspartate aminotransferase) are transaminases that catalyze transamination reactions."},{"q":"Liver cirrhosis shows elevation of all EXCEPT:","options":["a- ALT","b- AST","c- Urea","d- Ammonia"],"correct":2,"rationale":"In liver cirrhosis (hepatic failure), the liver loses its ability to efficiently convert ammonia into urea. Consequently, blood ammonia levels rise (hyperammonemia) while plasma urea levels characteristically decrease."},{"q":"Urea cycle occurs in:","options":["a- Liver cytosol","b- Liver & kidney cytosol","c- Liver mitochondria","d- Liver cytosol & mitochondria"],"correct":3,"rationale":"The urea cycle is compartmentalized within the liver cells. The first two reactions occur in the mitochondrial matrix, and all subsequent steps take place in the cytosol."},{"q":"Sources of the two nitrogens in urea:","options":["a- Ammonia & ornithine","b- Ammonia & citrulline","c- Ammonia & aspartate","d- None"],"correct":2,"rationale":"The urea molecule requires two nitrogen atoms: the first is derived from free ammonia (incorporated via carbamoyl phosphate) , and the second is directly donated by the amino acid aspartate during the formation of argininosuccinate."},{"q":"Mitochondrial steps of urea cycle end by:","options":["a- Arginine -> urea + ornithine","b- Aspartate + citrulline -> argininosuccinate","c- Ornithine + carbamoyl phosphate -> citrulline","d- Formation of carbamoyl phosphate"],"correct":2,"rationale":"The mitochondrial phase of the urea cycle concludes with the enzyme ornithine transcarbamoylase catalyzing the formation of citrulline from ornithine and carbamoyl phosphate. Citrulline is then transported out into the cytosol."},{"q":"Cytosolic enzyme(s):","options":["a- CPS1","b- Ornithine transcarbamylase","c- Argininosuccinate synthetase","d- Argininosuccinate lyase","e- C and D"],"correct":4,"rationale":"Both Argininosuccinate synthetase and Argininosuccinate lyase are enzymes that function strictly within the cytosol during the later stages of the urea cycle."},{"q":"Normal ammonia level:","options":["a- 0.5 mg/dL","b- <0.05 mg/dL","c- 50 mg/dL","d- 10-50 mg/dL"],"correct":1,"rationale":"Under normal physiological conditions, the hepatic urea cycle efficiently clears ammonia, keeping the normal blood ammonia level safely below 0.05 mg/dL."},{"q":"Urea is elevated in:","options":["a- Liver disease","b- Kidney disease","c- Muscle disease","d- A and B"],"correct":1,"rationale":"Urea is synthesized in the liver but excreted by the kidneys. In cases of renal (kidney) failure, the body cannot excrete urea, leading to elevated plasma urea levels."},{"q":"Acquired hyperammonemia due to:","options":["a- Hepatitis","b- Alcoholism","c- Biliary obstruction","d- All"],"correct":3,"rationale":"Acquired hyperammonemia develops secondary to severe liver disease or cirrhosis, which can be caused by various conditions including alcoholism, viral hepatitis, and biliary obstruction."},{"q":"High blood ammonia in liver cirrhosis due to:","options":["a- Portal-systemic shunting","b- Decreased conversion of ammonia to urea","c- A and B","d- None"],"correct":2,"rationale":"In cirrhosis, hyperammonemia occurs due to a dual failure: collateral circulation (portal-systemic shunting) bypasses the liver , and the damaged liver tissue suffers a severely impaired ability to convert ammonia into urea."},{"q":"Cause of convulsions in hepatic patients:","options":["a- ↑ GABA from ↑ glutamate","b- ↑ GABA from ↓ glutamine","c- ↓ GABA due to glutamate -> glutamine","d- ↓ GABA due to ↑ a-ketoglutarate"],"correct":2,"rationale":"Ammonia toxicity causes convulsions linked to a deficiency in the inhibitory neurotransmitter GABA. Excess ammonia depletes a-ketoglutarate, shifting the equilibrium toward glutamate , which disrupts the normal conversion of glutamate into GABA."},{"q":"Ornithine transcarbamylase deficiency causes:","options":["a- Type I hyperammonemia","b- Citrullinuria","c- Argininosuccinic acidemia","d- Argininemia","e- None"],"correct":4,"rationale":"A deficiency in Ornithine transcarbamoylase specifically leads to Hyperammonemia type II. Since this specific condition is not listed among the choices, 'None' is the correct option."},{"q":"Citrullinuria is due to deficiency of:","options":["a- CPS1","b- Argininosuccinase","c- Arginase","d- Ornithine transcarbamylase","e- None"],"correct":4,"rationale":"Citrullinemia (or Citrullinuria) is caused by a genetic deficiency in the enzyme Argininosuccinate synthase. Because this specific enzyme is missing from the provided options, 'None' is correct."},{"q":"Which of the following amino acids are toxic to the intestine in celiac disease:","options":["a- Asparagine","b- Glutamate","c- Alanine","d- Glutamine"],"correct":3,"rationale":"In celiac disease, gluten undergoes partial digestion to produce large peptides that are rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."},{"q":"According ammonia:","options":["a- has Catabolic and anabolic fates","b- Synthesis of many essential amino acids","c- Only From deamination of amino acids","d- is converted into urea by kidney"],"correct":0,"rationale":"Ammonia has anabolic pathways (such as the synthesis of non-essential amino acids and glutamine) as well as catabolic/excretory pathways (mainly conversion to non-toxic urea in the liver)."},{"q":"About ALT and AST:","options":["a- are normal plasma enzymes","b- in ALT reaction glutamate act an nitrogen collector from alanine","c- their levels are increased by liver diseases only","d- plasma levels of AST and ALT are of therapeutic value in liver and muscle diseases"],"correct":1,"rationale":"In the transamination reaction catalyzed by ALT, the amino group from alanine is transferred to a-ketoglutarate, which accepts it to form glutamate, effectively acting as the nitrogen collector."},{"q":"Converting glutamate to alpha kg with release of free ammonia:","options":["a- transamintion","b- oxidative deamination","c- transdeamination","d- all of the above"],"correct":1,"rationale":"The specific step where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate (alpha kg) while releasing free ammonia is called oxidative deamination."},{"q":"Mitochondrial steps of urea cycle ends by:","options":["a- Splitting arginine into urea and ornithine","b- Transfer of aspartate to citrulline forming argininosuccinate","c- Transfer of ornithine to carbamoyl phosphate forming citrulline","d- Forming carbamoyl phosphate from CO2 and free ammonia"],"correct":2,"rationale":"The first two reactions of the urea cycle occur in the mitochondria. This mitochondrial phase concludes when ornithine transcarbamoylase catalyzes the formation of citrulline from ornithine and carbamoyl phosphate, after which citrulline is transported to the cytosol."},{"q":"Normal level of ammonia is:","options":["a- <.05 mg/dl","b- <.5 mg/dl","c- <5 mg/dl","d- <1 mg/dl"],"correct":0,"rationale":"The liver's capacity to run the urea cycle normally exceeds the rate of ammonia generation, effectively keeping the normal blood ammonia level safely below 0.05 mg/dL."},{"q":"Main fate of amino acids catabolism:","options":["a- Urea","b- uric acid","c- glucose","d- direct excretion in urine"],"correct":0,"rationale":"The primary disposal and catabolic fate of the toxic ammonia generated from amino acid deamination is its conversion into non-toxic urea by the liver."},{"q":"Congenital deficiency of ornithine transcarbamoylase causes:","options":["a- Hyperammonaemia type I","b- Hyperammonaemia type II","c- Hyperornithinaemia","d- Citrullinaemia"],"correct":1,"rationale":"A specific genetic deficiency in the urea cycle enzyme ornithine transcarbamoylase leads to Hyperammonemia type II (an X-linked disorder)."},{"q":"The following enzyme of urea cycle is present in cytosol:","options":["a- Argininosuccinic acid synthetase","b- Argininosuccinase","c- Arginase","d- All of these"],"correct":3,"rationale":"Once citrulline enters the cytosol, all subsequent reactions of the urea cycle take place there. This involves the enzymes argininosuccinate synthetase, argininosuccinate lyase (argininosuccinase), and arginase."},{"q":"Activation or inactivation of certain key regulatory enzymes is accomplished by covalent modification of the amino acid:","options":["a- Glycine","b- Phenylalanine","c- Lysine","d- Serine"],"correct":3,"rationale":"Covalent modifications, such as phosphorylation, typically occur on amino acids that contain a hydroxyl group in their side chain. Serine is the primary amino acid targeted for these regulatory modifications."},{"q":"All of the following may cause hyperammonemia EXCEPT:","options":["a- OTC deficiency","b- CPS I deficiency","c- Uric aciduria","d- Argininosuccinate lyase deficiency"],"correct":2,"rationale":"Hereditary hyperammonemia is caused by a deficiency in any of the five enzymes of the urea cycle (such as OTC, CPS I, or Argininosuccinate lyase). Uric aciduria is unrelated to this pathway."},{"q":"Which of the following amino acids can directly donate nitrogen for urea synthesis?","options":["a- Phenylalanine","b- Aspartate","c- Valine","d- Serine"],"correct":1,"rationale":"The urea molecule requires two nitrogen atoms. One comes from free ammonia, and the second is directly donated by the amino acid aspartate during the cytosolic formation of argininosuccinate."},{"q":"Which enzyme is deficient in type I hyperammonemia?","options":["a- Carbamoyl phosphate synthetase I","b- Ornithine transcarbamylase","c- Argininosuccinate lyase","d- Glutamate dehydrogenase"],"correct":0,"rationale":"Hyperammonemia type I is specifically caused by a deficiency in the enzyme Carbamoyl phosphate synthetase I (CPS I)."},{"q":"Ammonia is primarily detoxified in the:","options":["a- Brain","b- Liver","c- Kidney","d- Muscle"],"correct":1,"rationale":"The liver serves as the main detoxification center of the body for amino acid deamination, converting the majority of toxic ammonia into urea."},{"q":"Which of the following urea cycle enzymes functions in the cytosol?","options":["a- Carbamoyl phosphate synthetase I","b- Ornithine transcarbamylase","c- Argininosuccinate synthetase","d- N-acetylglutamate synthase"],"correct":2,"rationale":"Carbamoyl phosphate synthetase I and Ornithine transcarbamoylase function exclusively in the mitochondrial matrix. Argininosuccinate synthetase operates in the cytosol."},{"q":"Which of the following amino acids helps in the detoxification of ammonia in muscle tissue?","options":["a- Glycine","b- Glutamate","c- Glutamine","d- Alanine"],"correct":2,"rationale":"In extrarenal tissues, ammonia can be detoxified by converting it into glutamine. This is especially important for safely transporting ammonia through the bloodstream without toxicity. (Note: While muscle also heavily utilizes alanine via the glucose-alanine cycle, glutamine formation is a key generalized mechanism for extrahepatic ammonia detoxification)."},{"q":"Which enzyme activates trypsinogen into trypsin in the small intestine?","options":["a- Pepsin","b- Enteropeptidase","c- Chymotrypsin","d- Aminopeptidase"],"correct":1,"rationale":"Enteropeptidase is the specific intestinal enzyme that initiates the activation of the pancreatic zymogen trypsinogen."},{"q":"What is the primary role of gastric HCl in protein digestion?","options":["a- Hydrolysis of peptide bonds","b- Activation of chymotrypsin","c- Denaturation/unfolding of protein","d- Absorption of amino acids"],"correct":2,"rationale":"Gastric HCl denatures proteins, making them accessible to proteolytic enzymes like pepsin."},{"q":"Which amino acid acts as the nitrogen acceptor in transamination?","options":["a- Alanine","b- Glutamate","c- a-Ketoglutarate","d- Aspartate"],"correct":2,"rationale":"a-Ketoglutarate is the universal a-keto acid that accepts amino groups during transamination to become glutamate."},{"q":"Where does the urea cycle primarily occur?","options":["a- Kidney only","b- Muscle only","c- Liver (mitochondria and cytosol)","d- Intestine"],"correct":2,"rationale":"Urea formation is confined to the liver because it is the only organ that expresses the enzyme arginase."},{"q":"Which urea cycle enzyme requires N-acetylglutamate as an activator?","options":["a- Arginase","b- Carbamoyl phosphate synthetase I","c- Argininosuccinate lyase","d- Ornithine transcarbamylase"],"correct":1,"rationale":"CPS I is the rate-limiting enzyme of the urea cycle and is absolutely dependent on N-acetylglutamate."},{"q":"Which molecule donates the second nitrogen in the urea cycle?","options":["a- Ammonia","b- Glutamine","c- Aspartate","d- Alanine"],"correct":2,"rationale":"The second nitrogen of the urea molecule is directly donated by aspartate."},{"q":"Hyperammonemia type I is caused by a deficiency of:","options":["a- Arginase","b- Ornithine transcarbamylase","c- Carbamoyl phosphate synthetase I","d- Argininosuccinate synthetase"],"correct":2,"rationale":"CPS I deficiency is the cause of Hyperammonemia Type I."},{"q":"Which amino acid is the primary transport form of ammonia from muscle?","options":["a- Glutamine","b- Alanine","c- Glutamate","d- Arginine"],"correct":1,"rationale":"The glucose-alanine cycle is the primary mechanism for transporting nitrogen from muscle to the liver."},{"q":"What is the main end-product of amino acid catabolism in humans?","options":["a- Ammonia","b- Uric acid","c- Urea","d- Creatinine"],"correct":2,"rationale":"The liver converts toxic ammonia into non-toxic urea for safe excretion."},{"q":"Which enzyme deficiency causes Hyperammonemia Type II?","options":["a- Ornithine transcarbamylase","b- Carbamoyl phosphate synthetase I","c- Argininosuccinate lyase","d- Arginase"],"correct":0,"rationale":"This X-linked disorder is specifically caused by a deficiency in Ornithine transcarbamylase."},{"q":"Why is ammonia toxic to the brain?","options":["a- It depletes a-Ketoglutarate","b- It inhibits glycolysis","c- It increases ATP synthesis","d- It promotes GABA synthesis"],"correct":0,"rationale":"Ammonia forces the glutamate dehydrogenase reaction to form glutamate, depleting the TCA cycle intermediate a-Ketoglutarate."},{"q":"Kwashiorkor is primarily caused by:","options":["a- Calorie deficiency","b- Protein deficiency","c- Fat deficiency","d- Vitamin deficiency"],"correct":1,"rationale":"Kwashiorkor is defined by protein deficiency despite adequate caloric intake."},{"q":"Which enzyme cleaves arginine to produce urea?","options":["a- Arginase","b- Argininosuccinate synthetase","c- Argininosuccinate lyase","d- Urease"],"correct":0,"rationale":"Arginase is the liver enzyme that splits arginine into urea and ornithine."},{"q":"What is the cause of edema in Kwashiorkor?","options":["a- Excess sodium retention","b- Decreased plasma albumin","c- Increased heart failure","d- Increased histamine release"],"correct":1,"rationale":"The lack of protein leads to low albumin, reducing plasma oncotic pressure and causing fluid leakage into tissues (edema)."},{"q":"Which transport molecule is used to move ammonia from brain to liver?","options":["a- Alanine","b- Glutamine","c- Arginine","d- Aspartate"],"correct":1,"rationale":"Glutamine is the primary safe transport form for ammonia in extrarenal tissues, especially the brain."},{"q":"Which of these is an essential component of collagen?","options":["a- Alanine","b- Glycine","c- Valine","d- Leucine"],"correct":1,"rationale":"Glycine is an essential component of collagen, appearing in every third position of the triple helix."},{"q":"What is the caloric value of 1 gram of protein?","options":["a- 4 kcal","b- 7 kcal","c- 9 kcal","d- 2 kcal"],"correct":0,"rationale":"Proteins provide 4 kcal/gram of energy."},{"q":"Which zymogen activates chymotrypsinogen?","options":["a- Pepsin","b- Trypsin","c- Aminopeptidase","d- Enteropeptidase"],"correct":1,"rationale":"Active trypsin is the master enzyme that activates the other pancreatic proteolytic enzymes, including chymotrypsinogen."},{"q":"What is the normal blood ammonia level?","options":["a- < 0.05 mg/dL","b- < 5 mg/dL","c- < 10 mg/dL","d- < 50 mg/dL"],"correct":0,"rationale":"Normal physiological levels of blood ammonia are very low, maintained under 0.05 mg/dL by the urea cycle."},{"q":"Which amino acid donates nitrogen for purine synthesis?","options":["a- Glutamine","b- Alanine","c- Valine","d- Leucine"],"correct":0,"rationale":"The amide group of glutamine is a key nitrogen source for the synthesis of purines, pyrimidines, and amino sugars."}],"sections":[{"section_title":"Department Questions (Protein Metabolism)","section_description":"أسئلة القسم على الشابتر 29 سؤال","questions":[{"q":"Role of HCI in protein digestion is:","options":["a- Unfolding of protein","b- Activation of pepsinogen","c- Activation of trypsinogen","d- All of the above","e- A and B"],"correct":4,"rationale":"Gastric Hydrochloric Acid (HCl) causes unfolding (denaturation) of polypeptide chains and plays a direct role in activating pepsinogen into its active form, pepsin."},{"q":"One of the following is a gastric enzyme:","options":["a- Trypsin","b- Aminopeptidase","c- Chymotrypsin","d- Elastase","e- Pepsin"],"correct":4,"rationale":"Pepsin is the primary proteolytic enzyme secreted by the chief cells of the stomach."},{"q":"Activation of pepsinogen occurs by:","options":["a- Intestinal enteropeptidase","b- Autocatalytic activation","c- HCI","d- B and C","e- A and B"],"correct":3,"rationale":"Pepsinogen is initially activated by gastric HCl, and further activation occurs through an autocatalytic process where active pepsin activates additional pepsinogen molecules."},{"q":"One of the following is not a pancreatic enzyme:","options":["a- Trypsin","b- Chymotrypsin","c- Carboxypeptidase","d- Aminopeptidase","e- None of the above"],"correct":3,"rationale":"Aminopeptidases are intestinal enzymes secreted in the small intestine to complete digestion, whereas trypsin, chymotrypsin, and carboxypeptidase are synthesized in the pancreas."},{"q":"All the following are zymogens except:","options":["a- Chymotrypsinogen","b- Pepsinogen","c- Trypsinogen","d- Dipeptidase"],"correct":3,"rationale":"Dipeptidases are active intestinal enzymes that complete the digestion of dipeptides into free amino acids. They are not secreted in an inactive (zymogen) form like pepsinogen or trypsinogen."},{"q":"Trypsinogen activates:","options":["a- Pepsinogen","b- Chymotrypsinogen","c- Aminopeptidase","d- None of the above"],"correct":3,"rationale":"Trypsinogen is an inactive zymogen and cannot activate anything itself. It must first be converted into active Trypsin by enteropeptidase; it is the active Trypsin that subsequently activates chymotrypsinogen."},{"q":"Intestinal enteropeptidase is:","options":["a- Intestinal enzyme digesting protein","b- Pancreatic enzyme digesting protein","c- Activates proelastase","d- None of the above"],"correct":3,"rationale":"Intestinal enteropeptidase is a specific enzyme whose primary role is to activate pancreatic trypsinogen into active trypsin. It does not directly digest dietary protein or activate proelastase."},{"q":"Absorption of amino acids is by:","options":["a- Passive diffusion & facilitated transport","b- Active transport","c- Passive diffusion","d- Facilitated transport"],"correct":1,"rationale":"Free amino acids are rapidly absorbed from the small intestine into the bloodstream via active transport mechanisms."},{"q":"Absorption of dipeptides:","options":["a- Normal in humans","b- Occurs in protein allergy","c- Occurs in celiac disease","d- B and C"],"correct":3,"rationale":"Under abnormal conditions, a temporary defect in the intestinal epithelium combined with impaired digestion may allow intact proteins or large toxic peptides (like in celiac disease) to pass into circulation, forming the basis for allergies and malabsorption disorders."},{"q":"Celiac disease is an allergy to:","options":["a- Gluten","b- Gliadin","c- Albumin","d- B and C"],"correct":0,"rationale":"Celiac disease is a specific malabsorption disorder that occurs in response to the ingestion of gluten, a protein primarily found in wheat."},{"q":"Amino acids toxic to intestine in celiac disease:","options":["a- Asparagine","b- Glutamate","c- Glutamine","d- Alanine"],"correct":2,"rationale":"The partial digestion of gluten produces large peptides that are exceptionally rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."},{"q":"A patient with celiac disease should avoid:","options":["a- Wheat","b- Milk","c- Oat","d- All of the above","e- A and C"],"correct":0,"rationale":"Since celiac disease is an immune response to gluten, the patient must avoid wheat, as gluten is the primary protein found within it."},{"q":"Formation NOT an anabolic fate of amino acids:","options":["a- Creatine","b- Milk","c- Glucose","d- Muscle protein","e- Purines"],"correct":2,"rationale":"The conversion of the amino acid's carbon skeleton into glucose is categorized as a catabolic pathway, whereas building proteins, creatine, and purines are anabolic fates."},{"q":"Main catabolic fate of amino acids is conversion to:","options":["a- Uric acid","b- Urea","c- Ketone bodies","d- Direct urinary excretion"],"correct":1,"rationale":"The primary catabolic fate of amino acids involves deamination, producing toxic ammonia. The liver converts most of this toxic ammonia into non-toxic urea for safe excretion."},{"q":"Removal of amino nitrogen and formation of ammonia is by:","options":["a- Transamination","b- Oxidative deamination","c- Transdeamination","d- None"],"correct":2,"rationale":"The complete removal of ammonia from most amino acids involves a coupled process: transamination followed by oxidative deamination. These two steps functioning sequentially are collectively termed 'transdeamination'."},{"q":"Release of free ammonia from glutamate to a-ketoglutarate is:","options":["a- Oxidative deamination","b- Transdeamination","c- Transamination","d- All"],"correct":0,"rationale":"The specific reaction where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate, releasing free ammonia in the process, is called oxidative deamination."},{"q":"Enzyme that does NOT catalyze transamination:","options":["a- ALT","b- L-glutamate dehydrogenase","c- AST","d- None"],"correct":1,"rationale":"L-glutamate dehydrogenase is responsible for oxidative deamination. In contrast, ALT (Alanine aminotransferase) and AST (Aspartate aminotransferase) are transaminases that catalyze transamination reactions."},{"q":"Liver cirrhosis shows elevation of all EXCEPT:","options":["a- ALT","b- AST","c- Urea","d- Ammonia"],"correct":2,"rationale":"In liver cirrhosis (hepatic failure), the liver loses its ability to efficiently convert ammonia into urea. Consequently, blood ammonia levels rise (hyperammonemia) while plasma urea levels characteristically decrease."},{"q":"Urea cycle occurs in:","options":["a- Liver cytosol","b- Liver & kidney cytosol","c- Liver mitochondria","d- Liver cytosol & mitochondria"],"correct":3,"rationale":"The urea cycle is compartmentalized within the liver cells. The first two reactions occur in the mitochondrial matrix, and all subsequent steps take place in the cytosol."},{"q":"Sources of the two nitrogens in urea:","options":["a- Ammonia & ornithine","b- Ammonia & citrulline","c- Ammonia & aspartate","d- None"],"correct":2,"rationale":"The urea molecule requires two nitrogen atoms: the first is derived from free ammonia (incorporated via carbamoyl phosphate) , and the second is directly donated by the amino acid aspartate during the formation of argininosuccinate."},{"q":"Mitochondrial steps of urea cycle end by:","options":["a- Arginine -> urea + ornithine","b- Aspartate + citrulline -> argininosuccinate","c- Ornithine + carbamoyl phosphate -> citrulline","d- Formation of carbamoyl phosphate"],"correct":2,"rationale":"The mitochondrial phase of the urea cycle concludes with the enzyme ornithine transcarbamoylase catalyzing the formation of citrulline from ornithine and carbamoyl phosphate. Citrulline is then transported out into the cytosol."},{"q":"Cytosolic enzyme(s):","options":["a- CPS1","b- Ornithine transcarbamylase","c- Argininosuccinate synthetase","d- Argininosuccinate lyase","e- C and D"],"correct":4,"rationale":"Both Argininosuccinate synthetase and Argininosuccinate lyase are enzymes that function strictly within the cytosol during the later stages of the urea cycle."},{"q":"Normal ammonia level:","options":["a- 0.5 mg/dL","b- <0.05 mg/dL","c- 50 mg/dL","d- 10-50 mg/dL"],"correct":1,"rationale":"Under normal physiological conditions, the hepatic urea cycle efficiently clears ammonia, keeping the normal blood ammonia level safely below 0.05 mg/dL."},{"q":"Urea is elevated in:","options":["a- Liver disease","b- Kidney disease","c- Muscle disease","d- A and B"],"correct":1,"rationale":"Urea is synthesized in the liver but excreted by the kidneys. In cases of renal (kidney) failure, the body cannot excrete urea, leading to elevated plasma urea levels."},{"q":"Acquired hyperammonemia due to:","options":["a- Hepatitis","b- Alcoholism","c- Biliary obstruction","d- All"],"correct":3,"rationale":"Acquired hyperammonemia develops secondary to severe liver disease or cirrhosis, which can be caused by various conditions including alcoholism, viral hepatitis, and biliary obstruction."},{"q":"High blood ammonia in liver cirrhosis due to:","options":["a- Portal-systemic shunting","b- Decreased conversion of ammonia to urea","c- A and B","d- None"],"correct":2,"rationale":"In cirrhosis, hyperammonemia occurs due to a dual failure: collateral circulation (portal-systemic shunting) bypasses the liver , and the damaged liver tissue suffers a severely impaired ability to convert ammonia into urea."},{"q":"Cause of convulsions in hepatic patients:","options":["a- ↑ GABA from ↑ glutamate","b- ↑ GABA from ↓ glutamine","c- ↓ GABA due to glutamate -> glutamine","d- ↓ GABA due to ↑ a-ketoglutarate"],"correct":2,"rationale":"Ammonia toxicity causes convulsions linked to a deficiency in the inhibitory neurotransmitter GABA. Excess ammonia depletes a-ketoglutarate, shifting the equilibrium toward glutamate , which disrupts the normal conversion of glutamate into GABA."},{"q":"Ornithine transcarbamylase deficiency causes:","options":["a- Type I hyperammonemia","b- Citrullinuria","c- Argininosuccinic acidemia","d- Argininemia","e- None"],"correct":4,"rationale":"A deficiency in Ornithine transcarbamoylase specifically leads to Hyperammonemia type II. Since this specific condition is not listed among the choices, 'None' is the correct option."},{"q":"Citrullinuria is due to deficiency of:","options":["a- CPS1","b- Argininosuccinase","c- Arginase","d- Ornithine transcarbamylase","e- None"],"correct":4,"rationale":"Citrullinemia (or Citrullinuria) is caused by a genetic deficiency in the enzyme Argininosuccinate synthase. Because this specific enzyme is missing from the provided options, 'None' is correct."}]},{"section_title":"Previous Years' Questions (Protein Metabolism)","section_description":"أسئلة السنوات السابقة على هذا الشابتر 16 سؤال","questions":[{"q":"Which of the following amino acids are toxic to the intestine in celiac disease:","options":["a- Asparagine","b- Glutamate","c- Alanine","d- Glutamine"],"correct":3,"rationale":"In celiac disease, gluten undergoes partial digestion to produce large peptides that are rich in glutamine, and it is these specific peptides that are toxic to the intestinal mucosa."},{"q":"According ammonia:","options":["a- has Catabolic and anabolic fates","b- Synthesis of many essential amino acids","c- Only From deamination of amino acids","d- is converted into urea by kidney"],"correct":0,"rationale":"Ammonia has anabolic pathways (such as the synthesis of non-essential amino acids and glutamine) as well as catabolic/excretory pathways (mainly conversion to non-toxic urea in the liver)."},{"q":"About ALT and AST:","options":["a- are normal plasma enzymes","b- in ALT reaction glutamate act an nitrogen collector from alanine","c- their levels are increased by liver diseases only","d- plasma levels of AST and ALT are of therapeutic value in liver and muscle diseases"],"correct":1,"rationale":"In the transamination reaction catalyzed by ALT, the amino group from alanine is transferred to a-ketoglutarate, which accepts it to form glutamate, effectively acting as the nitrogen collector."},{"q":"Converting glutamate to alpha kg with release of free ammonia:","options":["a- transamintion","b- oxidative deamination","c- transdeamination","d- all of the above"],"correct":1,"rationale":"The specific step where the enzyme glutamate dehydrogenase converts glutamate into a-ketoglutarate (alpha kg) while releasing free ammonia is called oxidative deamination."},{"q":"Mitochondrial steps of urea cycle ends by:","options":["a- Splitting arginine into urea and ornithine","b- Transfer of aspartate to citrulline forming argininosuccinate","c- Transfer of ornithine to carbamoyl phosphate forming citrulline","d- Forming carbamoyl phosphate from CO2 and free ammonia"],"correct":2,"rationale":"The first two reactions of the urea cycle occur in the mitochondria. This mitochondrial phase concludes when ornithine transcarbamoylase catalyzes the formation of citrulline from ornithine and carbamoyl phosphate, after which citrulline is transported to the cytosol."},{"q":"Normal level of ammonia is:","options":["a- <.05 mg/dl","b- <.5 mg/dl","c- <5 mg/dl","d- <1 mg/dl"],"correct":0,"rationale":"The liver's capacity to run the urea cycle normally exceeds the rate of ammonia generation, effectively keeping the normal blood ammonia level safely below 0.05 mg/dL."},{"q":"Main fate of amino acids catabolism:","options":["a- Urea","b- uric acid","c- glucose","d- direct excretion in urine"],"correct":0,"rationale":"The primary disposal and catabolic fate of the toxic ammonia generated from amino acid deamination is its conversion into non-toxic urea by the liver."},{"q":"Congenital deficiency of ornithine transcarbamoylase causes:","options":["a- Hyperammonaemia type I","b- Hyperammonaemia type II","c- Hyperornithinaemia","d- Citrullinaemia"],"correct":1,"rationale":"A specific genetic deficiency in the urea cycle enzyme ornithine transcarbamoylase leads to Hyperammonemia type II (an X-linked disorder)."},{"q":"The following enzyme of urea cycle is present in cytosol:","options":["a- Argininosuccinic acid synthetase","b- Argininosuccinase","c- Arginase","d- All of these"],"correct":3,"rationale":"Once citrulline enters the cytosol, all subsequent reactions of the urea cycle take place there. This involves the enzymes argininosuccinate synthetase, argininosuccinate lyase (argininosuccinase), and arginase."},{"q":"Activation or inactivation of certain key regulatory enzymes is accomplished by covalent modification of the amino acid:","options":["a- Glycine","b- Phenylalanine","c- Lysine","d- Serine"],"correct":3,"rationale":"Covalent modifications, such as phosphorylation, typically occur on amino acids that contain a hydroxyl group in their side chain. Serine is the primary amino acid targeted for these regulatory modifications."},{"q":"All of the following may cause hyperammonemia EXCEPT:","options":["a- OTC deficiency","b- CPS I deficiency","c- Uric aciduria","d- Argininosuccinate lyase deficiency"],"correct":2,"rationale":"Hereditary hyperammonemia is caused by a deficiency in any of the five enzymes of the urea cycle (such as OTC, CPS I, or Argininosuccinate lyase). Uric aciduria is unrelated to this pathway."},{"q":"Which of the following amino acids can directly donate nitrogen for urea synthesis?","options":["a- Phenylalanine","b- Aspartate","c- Valine","d- Serine"],"correct":1,"rationale":"The urea molecule requires two nitrogen atoms. One comes from free ammonia, and the second is directly donated by the amino acid aspartate during the cytosolic formation of argininosuccinate."},{"q":"Which enzyme is deficient in type I hyperammonemia?","options":["a- Carbamoyl phosphate synthetase I","b- Ornithine transcarbamylase","c- Argininosuccinate lyase","d- Glutamate dehydrogenase"],"correct":0,"rationale":"Hyperammonemia type I is specifically caused by a deficiency in the enzyme Carbamoyl phosphate synthetase I (CPS I)."},{"q":"Ammonia is primarily detoxified in the:","options":["a- Brain","b- Liver","c- Kidney","d- Muscle"],"correct":1,"rationale":"The liver serves as the main detoxification center of the body for amino acid deamination, converting the majority of toxic ammonia into urea."},{"q":"Which of the following urea cycle enzymes functions in the cytosol?","options":["a- Carbamoyl phosphate synthetase I","b- Ornithine transcarbamylase","c- Argininosuccinate synthetase","d- N-acetylglutamate synthase"],"correct":2,"rationale":"Carbamoyl phosphate synthetase I and Ornithine transcarbamoylase function exclusively in the mitochondrial matrix. Argininosuccinate synthetase operates in the cytosol."},{"q":"Which of the following amino acids helps in the detoxification of ammonia in muscle tissue?","options":["a- Glycine","b- Glutamate","c- Glutamine","d- Alanine"],"correct":2,"rationale":"In extrarenal tissues, ammonia can be detoxified by converting it into glutamine. This is especially important for safely transporting ammonia through the bloodstream without toxicity. (Note: While muscle also heavily utilizes alanine via the glucose-alanine cycle, glutamine formation is a key generalized mechanism for extrahepatic ammonia detoxification)."}]},{"section_title":"Additional Questions Generated by AI","section_description":"أسئلة الذكاء الاصطناعي 20 سؤال","questions":[{"q":"Which enzyme activates trypsinogen into trypsin in the small intestine?","options":["a- Pepsin","b- Enteropeptidase","c- Chymotrypsin","d- Aminopeptidase"],"correct":1,"rationale":"Enteropeptidase is the specific intestinal enzyme that initiates the activation of the pancreatic zymogen trypsinogen."},{"q":"What is the primary role of gastric HCl in protein digestion?","options":["a- Hydrolysis of peptide bonds","b- Activation of chymotrypsin","c- Denaturation/unfolding of protein","d- Absorption of amino acids"],"correct":2,"rationale":"Gastric HCl denatures proteins, making them accessible to proteolytic enzymes like pepsin."},{"q":"Which amino acid acts as the nitrogen acceptor in transamination?","options":["a- Alanine","b- Glutamate","c- a-Ketoglutarate","d- Aspartate"],"correct":2,"rationale":"a-Ketoglutarate is the universal a-keto acid that accepts amino groups during transamination to become glutamate."},{"q":"Where does the urea cycle primarily occur?","options":["a- Kidney only","b- Muscle only","c- Liver (mitochondria and cytosol)","d- Intestine"],"correct":2,"rationale":"Urea formation is confined to the liver because it is the only organ that expresses the enzyme arginase."},{"q":"Which urea cycle enzyme requires N-acetylglutamate as an activator?","options":["a- Arginase","b- Carbamoyl phosphate synthetase I","c- Argininosuccinate lyase","d- Ornithine transcarbamylase"],"correct":1,"rationale":"CPS I is the rate-limiting enzyme of the urea cycle and is absolutely dependent on N-acetylglutamate."},{"q":"Which molecule donates the second nitrogen in the urea cycle?","options":["a- Ammonia","b- Glutamine","c- Aspartate","d- Alanine"],"correct":2,"rationale":"The second nitrogen of the urea molecule is directly donated by aspartate."},{"q":"Hyperammonemia type I is caused by a deficiency of:","options":["a- Arginase","b- Ornithine transcarbamylase","c- Carbamoyl phosphate synthetase I","d- Argininosuccinate synthetase"],"correct":2,"rationale":"CPS I deficiency is the cause of Hyperammonemia Type I."},{"q":"Which amino acid is the primary transport form of ammonia from muscle?","options":["a- Glutamine","b- Alanine","c- Glutamate","d- Arginine"],"correct":1,"rationale":"The glucose-alanine cycle is the primary mechanism for transporting nitrogen from muscle to the liver."},{"q":"What is the main end-product of amino acid catabolism in humans?","options":["a- Ammonia","b- Uric acid","c- Urea","d- Creatinine"],"correct":2,"rationale":"The liver converts toxic ammonia into non-toxic urea for safe excretion."},{"q":"Which enzyme deficiency causes Hyperammonemia Type II?","options":["a- Ornithine transcarbamylase","b- Carbamoyl phosphate synthetase I","c- Argininosuccinate lyase","d- Arginase"],"correct":0,"rationale":"This X-linked disorder is specifically caused by a deficiency in Ornithine transcarbamylase."},{"q":"Why is ammonia toxic to the brain?","options":["a- It depletes a-Ketoglutarate","b- It inhibits glycolysis","c- It increases ATP synthesis","d- It promotes GABA synthesis"],"correct":0,"rationale":"Ammonia forces the glutamate dehydrogenase reaction to form glutamate, depleting the TCA cycle intermediate a-Ketoglutarate."},{"q":"Kwashiorkor is primarily caused by:","options":["a- Calorie deficiency","b- Protein deficiency","c- Fat deficiency","d- Vitamin deficiency"],"correct":1,"rationale":"Kwashiorkor is defined by protein deficiency despite adequate caloric intake."},{"q":"Which enzyme cleaves arginine to produce urea?","options":["a- Arginase","b- Argininosuccinate synthetase","c- Argininosuccinate lyase","d- Urease"],"correct":0,"rationale":"Arginase is the liver enzyme that splits arginine into urea and ornithine."},{"q":"What is the cause of edema in Kwashiorkor?","options":["a- Excess sodium retention","b- Decreased plasma albumin","c- Increased heart failure","d- Increased histamine release"],"correct":1,"rationale":"The lack of protein leads to low albumin, reducing plasma oncotic pressure and causing fluid leakage into tissues (edema)."},{"q":"Which transport molecule is used to move ammonia from brain to liver?","options":["a- Alanine","b- Glutamine","c- Arginine","d- Aspartate"],"correct":1,"rationale":"Glutamine is the primary safe transport form for ammonia in extrarenal tissues, especially the brain."},{"q":"Which of these is an essential component of collagen?","options":["a- Alanine","b- Glycine","c- Valine","d- Leucine"],"correct":1,"rationale":"Glycine is an essential component of collagen, appearing in every third position of the triple helix."},{"q":"What is the caloric value of 1 gram of protein?","options":["a- 4 kcal","b- 7 kcal","c- 9 kcal","d- 2 kcal"],"correct":0,"rationale":"Proteins provide 4 kcal/gram of energy."},{"q":"Which zymogen activates chymotrypsinogen?","options":["a- Pepsin","b- Trypsin","c- Aminopeptidase","d- Enteropeptidase"],"correct":1,"rationale":"Active trypsin is the master enzyme that activates the other pancreatic proteolytic enzymes, including chymotrypsinogen."},{"q":"What is the normal blood ammonia level?","options":["a- < 0.05 mg/dL","b- < 5 mg/dL","c- < 10 mg/dL","d- < 50 mg/dL"],"correct":0,"rationale":"Normal physiological levels of blood ammonia are very low, maintained under 0.05 mg/dL by the urea cycle."},{"q":"Which amino acid donates nitrogen for purine synthesis?","options":["a- Glutamine","b- Alanine","c- Valine","d- Leucine"],"correct":0,"rationale":"The amide group of glutamine is a key nitrogen source for the synthesis of purines, pyrimidines, and amino sugars."}]}],"questionsCount":65,"repoName":"protein-metabolism","liveUrl":"https://IbrahimMedExams.github.io/protein-metabolism/"}</script>
